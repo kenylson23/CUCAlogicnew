@@ -22,11 +22,7 @@ export function useAuth() {
       if (!token) return null;
       
       try {
-        const response = await apiRequest("/api/auth/user", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await apiRequest("/api/auth/user");
         return response;
       } catch (error) {
         // Token invalid, clear local storage
@@ -48,7 +44,7 @@ export function useAuth() {
       // Ignore logout errors
     } finally {
       localStorage.removeItem("auth_token");
-      localStorage.removeUser("user");
+      localStorage.removeItem("user");
       setToken(null);
       setLocalUser(null);
       window.location.href = "/login";

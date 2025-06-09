@@ -38,7 +38,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/pontos-venda" component={PontosVenda} />
         <Route path="/galeria-fas" component={GaleriaFas} />
-        <Route path="/login" component={lazy(() => import("@/pages/login"))} />
+        <Route path="/login" component={lazy(() => import("@/pages/login-simple"))} />
         <Route path="/admin" component={AdminPanel} />
         <Route path="/admin-galeria" component={AdminGaleria} />
         <Route path="/admin/galeria" component={AdminGaleria} />
