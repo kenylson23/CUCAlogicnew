@@ -1,15 +1,20 @@
-import express from 'express';
-import serverless from 'serverless-http';
-import cors from 'cors';
-import { storage } from '../../server/storage.js';
+const express = require('express');
+const serverless = require('serverless-http');
 
 const app = express();
 
-// Configure CORS for Netlify
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
+// Configure CORS headers manually
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  next();
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -23,7 +28,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ message: 'Username and password required' });
     }
 
-    // Simple check - in production you'd verify against database
+    // Simple authentication for demo
     if (username === 'admin' && password === 'admin123') {
       const user = {
         id: '1',
@@ -44,7 +49,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.get('/api/auth/user', (req, res) => {
-  // Simple token check
+  // Simple token validation
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer simple-token-')) {
     return res.json({
@@ -63,10 +68,19 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
 
-// Fan photos routes
+// Mock data for fan photos
 app.get('/api/fan-photos', async (req, res) => {
   try {
-    const photos = await storage.getApprovedFanPhotos();
+    const photos = [
+      {
+        id: 1,
+        imageUrl: '/images/cuca-hero.jpg',
+        description: 'CUCA na praia com amigos',
+        userName: 'João Silva',
+        status: 'approved',
+        createdAt: new Date().toISOString()
+      }
+    ];
     res.json(photos);
   } catch (error) {
     console.error('Error fetching fan photos:', error);
@@ -76,7 +90,12 @@ app.get('/api/fan-photos', async (req, res) => {
 
 app.post('/api/fan-photos', async (req, res) => {
   try {
-    const photo = await storage.createFanPhoto(req.body);
+    const photo = {
+      id: Date.now(),
+      ...req.body,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
     res.status(201).json(photo);
   } catch (error) {
     console.error('Error creating fan photo:', error);
@@ -87,7 +106,11 @@ app.post('/api/fan-photos', async (req, res) => {
 // Contact messages
 app.post('/api/contact', async (req, res) => {
   try {
-    const message = await storage.createContactMessage(req.body);
+    const message = {
+      id: Date.now(),
+      ...req.body,
+      createdAt: new Date().toISOString()
+    };
     res.status(201).json(message);
   } catch (error) {
     console.error('Error creating contact message:', error);
@@ -98,7 +121,16 @@ app.post('/api/contact', async (req, res) => {
 // Products
 app.get('/api/products', async (req, res) => {
   try {
-    const products = await storage.getProducts();
+    const products = [
+      {
+        id: 1,
+        name: 'CUCA Original',
+        description: 'A cerveja nacional de Angola',
+        price: 250,
+        imageUrl: '/images/cuca-beer.jpg',
+        category: 'Cerveja'
+      }
+    ];
     res.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -106,5 +138,10 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
+// Catch all other routes
+app.all('*', (req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
 // Export handler for Netlify
-export const handler = serverless(app);
+module.exports.handler = serverless(app);
